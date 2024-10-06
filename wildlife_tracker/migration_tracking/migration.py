@@ -10,7 +10,5 @@ class Migration:
         self.current_date: str
         self.current_location: str
 
-    def schedule_migration(self, migration_path: MigrationPath) -> None:
-        pass
 
     
