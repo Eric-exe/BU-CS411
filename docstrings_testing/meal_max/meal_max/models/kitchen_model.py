@@ -20,6 +20,15 @@ class Meal:
     difficulty: str
 
     def __post_init__(self):
+        """
+        Checks if meal data is valid after init.
+
+        Args:
+            None.
+
+        Returns:
+            None.
+        """
         if self.price < 0:
             raise ValueError("Price must be a positive value.")
         if self.difficulty not in ['LOW', 'MED', 'HIGH']:
@@ -27,6 +36,18 @@ class Meal:
 
 
 def create_meal(meal: str, cuisine: str, price: float, difficulty: str) -> None:
+    """
+    Creates a new meal and stores it in the database.
+
+    Args:
+        meal (str): The name of the meal.
+        cuisine (str): The type of cuisine.
+        price (float): The price of the meal. Must be a positive number.
+        difficulty (str): The difficulty level of the meal. Must be one of 'LOW', 'MED', or 'HIGH'.
+    
+    Returns:
+        None.
+    """
     if not isinstance(price, (int, float)) or price <= 0:
         raise ValueError(f"Invalid price: {price}. Price must be a positive number.")
     if difficulty not in ['LOW', 'MED', 'HIGH']:
@@ -53,6 +74,15 @@ def create_meal(meal: str, cuisine: str, price: float, difficulty: str) -> None:
 
 
 def delete_meal(meal_id: int) -> None:
+    """
+    Marks a meal as deleted in the database.
+
+    Args:
+        meal_id (int): The ID of the meal to delete.
+
+    Returns:
+        None.
+    """
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor()
@@ -76,6 +106,15 @@ def delete_meal(meal_id: int) -> None:
         raise e
 
 def get_leaderboard(sort_by: str="wins") -> dict[str, Any]:
+    """
+    Gets the leaderboard of meals based on sorting type.
+
+    Args:
+        sort_by (str): The sorting type for the leaderboard. Can be 'wins' or 'win_pct'. Default is 'wins'.
+
+    Returns:
+        dict[str, Any]: A dictionary containing the leaderboard information
+    """
     query = """
         SELECT id, meal, cuisine, price, difficulty, battles, wins, (wins * 1.0 / battles) AS win_pct
         FROM meals WHERE deleted = false AND battles > 0
@@ -117,6 +156,15 @@ def get_leaderboard(sort_by: str="wins") -> dict[str, Any]:
         raise e
 
 def get_meal_by_id(meal_id: int) -> Meal:
+    """
+    Gets the meal object based on meal ID.
+
+    Args:
+        meal_id (int): The ID of the meal to get.
+    
+    Returns:
+        Meal: The meal object.
+    """
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor()
@@ -138,6 +186,15 @@ def get_meal_by_id(meal_id: int) -> Meal:
 
 
 def get_meal_by_name(meal_name: str) -> Meal:
+    """
+    Gets the meal object based on meal name.
+
+    Args:
+        meal_name (str): The name of the meal to get.
+
+    Returns:
+        Meal: The meal object.
+    """
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor()
@@ -159,6 +216,16 @@ def get_meal_by_name(meal_name: str) -> Meal:
 
 
 def update_meal_stats(meal_id: int, result: str) -> None:
+    """
+    Updates the meal stats based on battle result.
+
+    Args:
+        meal_id: The ID of the meal to update.
+        result: The result of the battle. One of 'win' or 'loss'.
+    
+    Returns:
+        None.
+    """
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor()
