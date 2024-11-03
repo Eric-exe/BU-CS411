@@ -28,6 +28,9 @@ class Meal:
 
         Returns:
             None.
+        
+        Raises:
+            ValueError: If the price is not a positive number or the difficulty is
         """
         if self.price < 0:
             raise ValueError("Price must be a positive value.")
@@ -47,6 +50,11 @@ def create_meal(meal: str, cuisine: str, price: float, difficulty: str) -> None:
     
     Returns:
         None.
+
+    Raises:
+        ValueError: If the price is not a positive number or the difficulty is invalid.
+        sqlite3.IntegrityError: If the meal name already exists in the database.
+        sqlite3.Error: Other database errors.
     """
     if not isinstance(price, (int, float)) or price <= 0:
         raise ValueError(f"Invalid price: {price}. Price must be a positive number.")
@@ -82,6 +90,10 @@ def delete_meal(meal_id: int) -> None:
 
     Returns:
         None.
+
+    Raises:
+        ValueError: If the meal ID is not found or the meal has already been marked as deleted.
+        sqlite3.Error: Other database errors.
     """
     try:
         with get_db_connection() as conn:
@@ -105,7 +117,7 @@ def delete_meal(meal_id: int) -> None:
         logger.error("Database error: %s", str(e))
         raise e
 
-def get_leaderboard(sort_by: str="wins") -> dict[str, Any]:
+def get_leaderboard(sort_by: str="wins") -> list[dict]:
     """
     Gets the leaderboard of meals based on sorting type.
 
@@ -113,7 +125,11 @@ def get_leaderboard(sort_by: str="wins") -> dict[str, Any]:
         sort_by (str): The sorting type for the leaderboard. Can be 'wins' or 'win_pct'. Default is 'wins'.
 
     Returns:
-        dict[str, Any]: A dictionary containing the leaderboard information
+        list[dict]: A list of meal objects with the following keys: id, meal, cuisine, price, difficulty, battles, wins, win_pct.
+
+    Raises:
+        ValueError: If the sort_by parameter is invalid.
+        sqlite3.Error: Other database errors.
     """
     query = """
         SELECT id, meal, cuisine, price, difficulty, battles, wins, (wins * 1.0 / battles) AS win_pct
@@ -164,6 +180,10 @@ def get_meal_by_id(meal_id: int) -> Meal:
     
     Returns:
         Meal: The meal object.
+
+    Raises:
+        ValueError: If the meal ID is not found or the meal has been marked as deleted.
+        sqlite3.Error: Other database errors.
     """
     try:
         with get_db_connection() as conn:
@@ -194,6 +214,10 @@ def get_meal_by_name(meal_name: str) -> Meal:
 
     Returns:
         Meal: The meal object.
+
+    Raises:
+        ValueError: If the meal name is not found or the meal has been marked as deleted.
+        sqlite3.Error: Other database errors.
     """
     try:
         with get_db_connection() as conn:
@@ -225,6 +249,11 @@ def update_meal_stats(meal_id: int, result: str) -> None:
     
     Returns:
         None.
+
+    Raises:
+        ValueError: If the meal ID is not found or the meal has been marked as deleted.
+        ValueError: If the result is not 'win' or 'loss'.
+        sqlite3.Error: Other database errors.
     """
     try:
         with get_db_connection() as conn:

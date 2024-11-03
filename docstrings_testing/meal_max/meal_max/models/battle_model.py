@@ -24,6 +24,9 @@ class BattleModel:
 
         Returns:
             Meal object: Winner Meal
+
+        Raises:
+            ValueError: If there are not enough combatants to start a battle.
         """
         logger.info("Two meals enter, one meal leaves!")
 
@@ -136,6 +139,9 @@ class BattleModel:
 
         Returns:
             None.
+
+        Raises:
+            ValueError: If the combatant list is full.
         """
         if len(self.combatants) >= 2:
             logger.error("Attempted to add combatant '%s' but combatants list is full", combatant_data.meal)
