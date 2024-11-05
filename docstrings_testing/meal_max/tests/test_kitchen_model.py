@@ -308,3 +308,88 @@ def test_get_leaderboard_win_pct():
     actual_query = normalize_whitespace(mock_cursor.execute.call_args[0][0])
 
     assert actual_query == expected_query, "The SQL query did not match the expected structure."
+
+def test_get_leaderboard_none():
+    """Test retrieving the leaderboard with no meals."""
+
+    mock_cursor.fetchall.return_value = []
+
+    mocker.patch("meal_max.models.kitchen.get_db_connection", return_value=mock_cursor)
+
+    result = get_leaderboard("wins")
+
+    expected_result = []
+
+    assert result == expected_result, f"Expected {expected_result}, got {result}."
+
+    expected_query = normalize_whitespace(""""
+        SELECT id, meal, cuisine, price, difficulty, battles, wins, (wins * 1.0 / battles) AS win_pct
+        FROM meals WHERE deleted = false AND battles > 0
+    """)
+    actual_query = normalize_whitespace(mock_cursor.execute.call_args[0][0])
+
+    assert actual_query == expected_query, "The SQL query did not match the expected structure."
+
+def test_clear_meals(mock_cursor):
+    """Test clearing the list of meals."""
+
+    mocker.patch.dict(os.environ, {"SQL_CREATE_TABLE_PATH": "/app/sql/create_meal_table.sql"})
+    
+    # Define the SQL script to recreate the meals table
+    create_table_script = """
+    DROP TABLE IF EXISTS meals;
+    CREATE TABLE meals (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        meal TEXT NOT NULL UNIQUE,
+        cuisine TEXT NOT NULL,
+        price REAL NOT NULL,
+        difficulty TEXT CHECK(difficulty IN ('HIGH', 'MED', 'LOW')),
+        battles INTEGER DEFAULT 0,
+        wins INTEGER DEFAULT 0,
+        deleted BOOLEAN DEFAULT FALSE
+    );
+    """
+    
+    mock_open = mock.mock_open(read_data=create_table_script)
+    mocker.patch("builtins.open", mock_open)
+    
+    clear_meals()
+    
+    expected_script = normalize_whitespace(create_table_script)
+    actual_script = normalize_whitespace(mock_cursor.executescript.call_args[0][0])
+
+    assert actual_script == expected_script, "The executed SQL script did not match the expected script."
+    mock_cursor.connection.commit.assert_called_once()
+
+def test_clear_meals_error(mock_cursor):
+    """Test clearing the list of meals with an error."""
+
+    mocker.patch.dict(os.environ, {"SQL_CREATE_TABLE_PATH": "/app/sql/create_meal_table.sql"})
+    
+    create_table_script = """
+    DROP TABLE IF EXISTS meals;
+    CREATE TABLE meals (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        meal TEXT NOT NULL UNIQUE,
+        cuisine TEXT NOT NULL,
+        price REAL NOT NULL,
+        difficulty TEXT CHECK(difficulty IN ('HIGH', 'MED', 'LOW')),
+        battles INTEGER DEFAULT 0,
+        wins INTEGER DEFAULT 0,
+        deleted BOOLEAN DEFAULT FALSE
+    );
+    """
+    
+    mock_open = mock.mock_open(read_data=create_table_script)
+    mocker.patch("builtins.open", mock_open)
+    
+    mock_cursor.executescript.side_effect = sqlite3.Error("Error executing script")
+    
+    with pytest.raises(sqlite3.Error, match="Error executing script"):
+        clear_meals()
+    
+    expected_script = normalize_whitespace(create_table_script)
+    actual_script = normalize_whitespace(mock_cursor.executescript.call_args[0][0])
+
+    assert actual_script == expected_script, "The executed SQL script did not match the expected script."
+    mock_cursor.connection.commit.assert_not_called()
