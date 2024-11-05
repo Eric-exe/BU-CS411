@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import logging
 import sqlite3
+import os
 from typing import Any
 
 from meal_max.utils.sql_utils import get_db_connection
@@ -125,11 +126,12 @@ def clear_meals() -> None:
         sqlite3.Error: If any database error occurs.
     """
     try:
-        with open(os.getenv("SQL_CREATE_TABLE_PATH", "/app/sql/create_meal_table.sql"), "r") as fh:
+        with open(os.getenv("SQL_CREATE_TABLE_PATH", "sql/create_meal_table.sql"), "r") as fh:
             create_table_script = fh.read()
         with get_db_connection() as conn:
             cursor = conn.cursor()
             cursor.executescript(create_table_script)
+            print("HEY")
             conn.commit()
 
             logger.info("Meals cleared successfully.")
