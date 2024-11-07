@@ -43,7 +43,7 @@ create_meal() {
     difficulty=$4
 
     echo "Adding meal ($meal, $cuisine, $price, $difficulty)..."
-    curl -s -X POST "$BASE_URL/create-meal" -H "Content-Type: application/json" -d "{\"meal\": \"$meal\", \"cuisine\": \"$cuisine\", \"price\": $price, \"difficulty\": $difficulty}" | grep -q '"status": "success"'
+    curl -s -X POST "$BASE_URL/create-meal" -H "Content-Type: application/json" -d "{\"meal\": \"$meal\", \"cuisine\": \"$cuisine\", \"price\": $price, \"difficulty\": \"$difficulty\"}" | grep -q '"status": "success"'
 
     if [ $? -eq 0 ]; then
         echo "Meal added successfully."
@@ -52,6 +52,7 @@ create_meal() {
         exit 1
     fi
 }
+
 
 # Function to check clear meals
 clear_meals() {
@@ -89,12 +90,12 @@ get_meal_by_id() {
             echo "Meal JSON (ID $id):"
             echo "$response" | jq .
         fi
-    fi
     else 
         echo "Failed to retrieve meal by ID ($id)."
         exit 1
     fi
 }
+
 
 # Function to get meal by name
 get_meal_by_name() {
@@ -169,7 +170,7 @@ prep_combatant() {
 get_leaderboard() {
     sort_by=$1
     echo "Getting leaderboard..."
-    response=$(curl -s -X GET "$BASE_URL/get-leaderboard?sort=$sort_by")
+    response=$(curl -s -X GET "$BASE_URL/leaderboard?sort=$sort_by")
     if echo "$response" | grep -q '"status": "success"'; then
         echo "Leaderboard retrieved successfully."
         if [ "$ECHO_JSON" = true ]; then
@@ -182,31 +183,35 @@ get_leaderboard() {
     fi
 }
 
+
 # Health checks
 check_health
 check_db
 
 # Create meals
-create_meal "Burger" "American" 10 1
-create_meal "Pizza" "Italian" 15 2
-create_meal "Sushi" "Japanese" 20 3
-create_meal "Taco" "Mexican" 12 2
-create_meal "Pasta" "Italian" 18 3
+create_meal "Burger" "American" 10 "MED"
+create_meal "Pizza" "Italian" 15 "LOW"
+create_meal "Sushi" "Japanese" 20 "HIGH"
+create_meal "Taco" "Mexican" 12 "MED"
+create_meal "Pasta" "Italian" 18 "LOW"
+
 
 # Get meals by ID
 get_meal_by_id 1
 get_meal_by_id 2
 get_meal_by_id 4
 
-delete_meal_by_id 3
-delete_meal_by_id 5
+delete_meal 3
+delete_meal 5
+
 
 clear_meals
 
-create_meal "Burger" "American" 10 1
-create_meal "Pizza" "Italian" 15 2
-create_meal "Sushi" "Japanese" 20 3
-create_meal "Taco" "Mexican" 12 2
+create_meal "Burger" "American" 10 "MED"
+create_meal "Pizza" "Italian" 15 "LOW"
+create_meal "Sushi" "Japanese" 20 "HIGH"
+create_meal "Taco" "Mexican" 12 "MED"
+
 
 get_meal_by_name "Burger"
 get_meal_by_name "Pizza"
@@ -214,15 +219,19 @@ get_meal_by_name "Taco"
 
 clear_combatants
 
+
 prep_combatant "Burger"
 prep_combatant "Pizza"
+get_combatants
+test_battle
+
+
+clear_combatants
 prep_combatant "Sushi"
 prep_combatant "Taco"
-
 get_combatants
+test_battle
 
-test_battle
-test_battle
 
 get_leaderboard "wins"
 get_leaderboard "win_pct"
